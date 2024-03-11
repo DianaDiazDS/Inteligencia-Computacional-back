@@ -119,6 +119,7 @@ def upload_midi():
 
 
 # Configura la clave API de OpenAI GPT-4
+
 openai.api_key = os.environ.get('KEY')
 
 
