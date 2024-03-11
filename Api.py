@@ -168,5 +168,10 @@ def chat():
     return jsonify({'response': gpt_response})
 
 
+@app.route('/')
+def home():
+    return "Back del proyecto de inteligencia"
+
+
 if __name__ == '__main__':
     app.run(debug=True)
