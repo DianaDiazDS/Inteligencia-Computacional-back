@@ -119,7 +119,7 @@ def upload_midi():
 
 
 # Configura la clave API de OpenAI GPT-4
-openai.api_key = "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"
+openai.api_key = "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"
 
 
 # Api gratis
