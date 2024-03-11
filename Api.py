@@ -1,12 +1,13 @@
 import io
 import os
+
 import openai
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from mido import MidiFile, MidiTrack, Message
 
 app = Flask(__name__)
-CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type", "Authorization"])
+CORS(app)
 
 
 def add_instruments_to_midi(input_midi_path, output_midi_path):
@@ -44,6 +45,44 @@ def add_instruments_to_midi(input_midi_path, output_midi_path):
 
     # Guarda el archivo MIDI modificado
     new_midi.save(output_midi_path)
+
+
+def preprocess_text(text):
+    import nltk
+    nltk.download('punkt')
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    from nltk.tokenize import word_tokenize
+    from nltk.corpus import stopwords
+    from textblob import TextBlob
+    from langdetect import detect
+    from googletrans import Translator
+
+    if detect(text) == 'en':
+        lang = 'english'
+    elif detect(text) == 'es':
+        lang = 'spanish'
+    else:
+        lang = 'english'
+
+    translator = Translator()
+    traduccion = translator.translate(text, dest="en")
+    sentiment = TextBlob(traduccion.text)
+    sentiment = sentiment.polarity
+
+    # Tokenización
+    tokens = word_tokenize(text, language=lang)
+
+    # Lista de stopwords en español
+    stop_words = set(stopwords.words(lang))
+
+    # Eliminación de stopwords
+    cleaned_tokens = [tokens[0]] + [word for word in tokens[1:] if word not in stop_words]
+
+    # Convertir tokens de nuevo a texto
+    preprocessed_text = ' '.join(cleaned_tokens)
+
+    return sentiment, preprocessed_text
 
 
 @app.route('/api/upload_midi', methods=['POST'])
@@ -86,11 +125,29 @@ openai.api_key = "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"
 # Api gratis
 # openai.api_key = "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"
 
+@app.route('/api/token', methods=['POST'])
+def token():
+    # Obtiene el mensaje del usuario desde la solicitud POST
+    user_input = request.json.get('user_input')
+    result = preprocess_text(user_input)
+    print(preprocess_text(user_input))
+    # Devuelve la respuesta como JSON
+    return jsonify({'response': result})
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     # Obtiene el mensaje del usuario desde la solicitud POST
-    user_input = request.json.get('user_input')
-    system_message = "Dame una respuesta con SOLO las notas en formato ABC QUE DUREN POR LO MENOS 15 SEGUNDOS Y MÁXIMO 30. NO DEBES REPONDER CON MÁS TEXTO DE LO QUE SE TE PIDE. LA RESPUESTA DEBE INCLUIR LOS INSTUMENTOS PIANO, GUITARRA Y BAJO. PONLE DE TITULO QUE SIMPRE SEA 'IA Song'"
+    sentiment, user_input = preprocess_text(request.json.get('user_input'))
+
+    if sentiment > 0.1:
+        estado_emocional = 'alegre'
+    elif sentiment < -0.1:
+        estado_emocional = 'triste'
+    else:
+        estado_emocional = 'neutro'
+
+    system_message = "Dame una respuesta con SOLO las notas en formato ABC QUE DUREN POR LO MENOS 15 SEGUNDOS Y MÁXIMO 30. NO DEBES REPONDER CON MÁS TEXTO DE LO QUE SE TE PIDE. LA RESPUESTA DEBE INCLUIR LOS INSTUMENTOS PIANO, GUITARRA Y BAJO. EL TITULO DE LA CANCIÓN SIMPRE ES 'IA Song'. El genero de la canción debe ser o asemejarse al que te piden, para esto puedes basarte en otras canciones del genero buscando sus notas y hacinedo una canción nueva parecida. El sentimiento del prompt es " + estado_emocional + "."
 
     # Interactúa con GPT-4
     response = openai.ChatCompletion.create(
@@ -99,7 +156,7 @@ def chat():
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_input}
         ],
-        max_tokens=2000,
+        max_tokens=3000,
         temperature=1,
         top_p=1,
         n=1,

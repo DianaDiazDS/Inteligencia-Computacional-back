@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "Back-IA/Api.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "Back-IA/Api.py"
+    }
+  ]
+}
