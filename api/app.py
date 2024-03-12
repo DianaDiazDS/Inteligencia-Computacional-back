@@ -139,17 +139,17 @@ def token():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     # Obtiene el mensaje del usuario desde la solicitud POST
-    # sentiment, user_input = preprocess_text(request.json.get('user_input'))
+    sentiment, user_input = preprocess_text(request.json.get('user_input'))
 
-    user_input = request.json.get('user_input')
-    # if sentiment > 0.1:
-    #     estado_emocional = 'alegre'
-    # elif sentiment < -0.1:
-    #     estado_emocional = 'triste'
-    # else:
-    #     estado_emocional = 'neutro'
+    # user_input = request.json.get('user_input')
+    if sentiment > 0.1:
+        estado_emocional = 'alegre'
+    elif sentiment < -0.1:
+        estado_emocional = 'triste'
+    else:
+        estado_emocional = 'neutro'
 
-    system_message = "Dame una respuesta con SOLO las notas en formato ABC QUE DUREN POR LO MENOS 15 SEGUNDOS Y MÁXIMO 30. NO DEBES REPONDER CON MÁS TEXTO DE LO QUE SE TE PIDE. LA RESPUESTA DEBE INCLUIR LOS INSTUMENTOS PIANO, GUITARRA Y BAJO. EL TITULO DE LA CANCIÓN SIMPRE ES 'IA Song'. El genero de la canción debe ser o asemejarse al que te piden, para esto puedes basarte en otras canciones del genero buscando sus notas y hacinedo una canción nueva parecida. "
+    system_message = "Dame una respuesta con SOLO las notas en formato ABC QUE DUREN POR LO MENOS 15 SEGUNDOS Y MÁXIMO 30. NO DEBES REPONDER CON MÁS TEXTO DE LO QUE SE TE PIDE. LA RESPUESTA DEBE INCLUIR LOS INSTUMENTOS PIANO, GUITARRA Y BAJO. EL TITULO DE LA CANCIÓN SIMPRE ES 'IA Song'. El genero de la canción debe ser o asemejarse al que te piden, para esto puedes basarte en otras canciones del genero buscando sus notas y hacinedo una canción nueva parecida. El sentimiento del prompt es " + estado_emocional + "."
 
     # Interactúa con GPT-4
     response = openai.ChatCompletion.create(
