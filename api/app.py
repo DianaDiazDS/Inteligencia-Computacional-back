@@ -174,3 +174,6 @@ def chat():
 def home():
     return "Back del proyecto de inteligencia"
 
+
+if __name__ == '__main__':
+    app.run()
